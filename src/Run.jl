@@ -84,6 +84,20 @@ const precompile_code = """
 _julia_cmd() = `$(Base.julia_cmd()) --color=yes --startup-file=no`
 # TODO: use --color=yes only when make sense
 
+struct Result
+    message::String
+    proc
+end
+
+function Base.show(io::IO, ::MIME"text/plain", result::Result)
+    print(io, "Result: ", result.message)
+    exitcode = result.proc.exitcode
+    if exitcode !== 0
+        print(io, " ")
+        printstyled(io, "(exit code: ", exitcode, ")"; color=:red)
+    end
+end
+
 function prepare(projectpath; precompile=true, parentproject=nothing)
     projectpath = dirname(existingproject(projectpath))
     code = prepare_code
@@ -96,7 +110,7 @@ function prepare(projectpath; precompile=true, parentproject=nothing)
     env = copy(ENV)
     env["JULIA_PROJECT"] = projectpath
     cmd = setenv(`$(_julia_cmd()) -e $code -- $parentproject`, env)
-    run(cmd)
+    return Result("preparation finished", run(cmd))
 end
 
 function runproject(
@@ -120,7 +134,7 @@ function runproject(
     end
     @info "Running $script"
     cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
-    run(cmd)
+    return Result("run finished", run(cmd))
 end
 
 prepare_test(path="test"; kwargs...) = prepare(path; kwargs...)
