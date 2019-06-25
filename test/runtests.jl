@@ -1,6 +1,6 @@
 using Run
 using Test
 
-@testset "Run.jl" begin
-    # Write your own tests here.
+@testset "smoke test" begin
+    @test Run.docs(joinpath(@__DIR__, "..", "docs")) isa Any
 end
