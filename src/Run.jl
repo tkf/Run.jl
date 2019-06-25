@@ -93,10 +93,9 @@ function prepare(projectpath; precompile=true, parentproject=nothing)
     if parentproject === nothing
         parentproject = dirname(abspath(projectpath))
     end
-    cmd = setenv(
-        `$(_julia_cmd()) -e $code -- $parentproject`,
-        "JULIA_PROJECT" => projectpath,
-    )
+    env = copy(ENV)
+    env["JULIA_PROJECT"] = projectpath
+    cmd = setenv(`$(_julia_cmd()) -e $code -- $parentproject`, env)
     run(cmd)
 end
 
@@ -114,14 +113,13 @@ function runproject(
     if fast
         julia_options = `--compile=min $julia_options`
     end
-    envs = [
-        "JULIA_PROJECT" => projectpath,
-    ]
+    env = copy(ENV)
+    env["JULIA_PROJECT"] = projectpath
     if strict
-        push!(envs, "JULIA_LOAD_PATH" => "@")
+        env["JULIA_LOAD_PATH"] = "@"
     end
     @info "Running $script"
-    cmd = setenv(`$(_julia_cmd()) $julia_options $script`, envs...)
+    cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
     run(cmd)
 end
 
