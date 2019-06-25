@@ -1,7 +1,7 @@
 module Run
 
 """
-    Run.test(path="test"; prepare, fast, strict, precompile)
+    Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
 
 Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
 
@@ -9,6 +9,10 @@ Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
 - `prepare::Bool = true`: Call `Run.prepare_test` if `true` (default).
 - `fast::Bool = false`: Try to run it faster (more precisely, pass
   `--compile=min` option to Julia subprocess.)
+- `compiled_modules::Union{Bool, Nothing} = nothing`:
+  Use `--compiled-modules=yes` (`--compiled-modules=no`) option if
+  `true` (`false`).  If `false`, it also skips precompilation in the
+  preparation phase.
 - `strict::Bool = true`: Do not include the default environment in the
   load path (more precisely, set the environment variable
   `JULIA_LOAD_PATH=@`).
@@ -17,7 +21,7 @@ Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
 test
 
 """
-    Run.docs(path="docs"; prepare, fast, strict, precompile)
+    Run.docs(path="docs"; prepare, fast, compiled_modules, strict, precompile)
 
 See [`Run.test`](@ref).
 """
@@ -31,7 +35,7 @@ directory of `path` into `\$path/Project.toml` if `\$path/Manifest.toml`
 does not exist.
 
 # Keyword Arguments
-- `precompile::Bool = true`: Precompile
+- `precompile::Bool = true`: Precompile the project if `true` (default).
 """
 prepare_test
 
@@ -117,15 +121,26 @@ function runproject(
     script;
     prepare::Bool = true,
     fast::Bool = false,
+    compiled_modules::Union{Bool, Nothing} = nothing,
     strict::Bool = true,
     julia_options::Cmd = ``,
+    precompile = (compiled_modules != false),
     kwargs...,
 )
     script = checkexisting(script)
     projectpath = dirname(script)
-    prepare && (@__MODULE__).prepare(projectpath; kwargs...)
+    prepare && (@__MODULE__).prepare(
+        projectpath;
+        precompile = precompile,
+        kwargs...,
+    )
     if fast
         julia_options = `--compile=min $julia_options`
+    end
+    if compiled_modules isa Bool
+        let yn = compiled_modules ? "yes" : "no"
+            julia_options = `--compiled-modules=$yn $julia_options`
+        end
     end
     env = copy(ENV)
     env["JULIA_PROJECT"] = projectpath
