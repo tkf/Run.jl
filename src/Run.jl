@@ -1,9 +1,12 @@
+@doc read(joinpath(dirname(@__DIR__), "README.md"), String) ->
 module Run
 
 """
     Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
 
 Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
+
+See also [`Run`](#Run).
 
 # Keyword Arguments
 - `prepare::Bool = true`: Call `Run.prepare_test` if `true` (default).
