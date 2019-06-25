@@ -1,7 +1,7 @@
 name = "Run"
 uuid = "e7132d5a-96e2-11e9-15da-db8a129aaaf8"
 authors = ["Takafumi Arakaki <aka.tkf@gmail.com>"]
-version = "0.1.0"
+version = "0.0.1-DEV"
 
 [compat]
 julia = "1.1"
