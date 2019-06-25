@@ -1,7 +1,7 @@
 module Run
 
 """
-    Run.test(path="test"; prepare, fast, precompile)
+    Run.test(path="test"; prepare, fast, strict, precompile)
 
 Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
 
@@ -9,12 +9,15 @@ Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
 - `prepare::Bool = true`: Call `Run.prepare_test` if `true` (default).
 - `fast::Bool = false`: Try to run it faster (more precisely, pass
   `--compile=min` option to Julia subprocess.)
+- `strict::Bool = true`: Do not include the default environment in the
+  load path (more precisely, set the environment variable
+  `JULIA_LOAD_PATH=@`).
 - Other keywords are passed to `Run.prepare_test`.
 """
 test
 
 """
-    Run.docs(path="docs"; prepare, fast, precompile)
+    Run.docs(path="docs"; prepare, fast, strict, precompile)
 
 See [`Run.test`](@ref).
 """
@@ -97,19 +100,28 @@ function prepare(projectpath; precompile=true, parentproject=nothing)
     run(cmd)
 end
 
-function runproject(script; prepare=true, fast=false, julia_options=``, kwargs...)
+function runproject(
+    script;
+    prepare::Bool = true,
+    fast::Bool = false,
+    strict::Bool = true,
+    julia_options::Cmd = ``,
+    kwargs...,
+)
     script = checkexisting(script)
     projectpath = dirname(script)
     prepare && (@__MODULE__).prepare(projectpath; kwargs...)
     if fast
         julia_options = `--compile=min $julia_options`
     end
-    @info "Running $script"
-    cmd = setenv(
-        `$(_julia_cmd()) $julia_options $script`,
+    envs = [
         "JULIA_PROJECT" => projectpath,
-        "JULIA_LOAD_PATH" => "@",
-    )
+    ]
+    if strict
+        push!(envs, "JULIA_LOAD_PATH" => "@")
+    end
+    @info "Running $script"
+    cmd = setenv(`$(_julia_cmd()) $julia_options $script`, envs...)
     run(cmd)
 end
 
