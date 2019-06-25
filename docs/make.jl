@@ -9,7 +9,6 @@ makedocs(;
     repo="https://github.com/tkf/Run.jl/blob/{commit}{path}#L{line}",
     sitename="Run.jl",
     authors="Takafumi Arakaki <aka.tkf@gmail.com>",
-    assets=String[],
 )
 
 deploydocs(;
