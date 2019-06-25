@@ -61,13 +61,13 @@ existingproject(name) = checkexisting(projecttomlpath(name))
 const prepare_code = """
 parentproject, = ARGS
 
-using Pkg
+Pkg = Base.require(Base.PkgId(Base.UUID(0x44cfe95a1eb252eab672e2afdf69b78f), "Pkg"))
 
 Base.HOME_PROJECT[] === nothing && error("No project specified")
 
 if !any(isfile.(joinpath.(Base.HOME_PROJECT[], ("JuliaManifest.toml", "Manifest.toml"))))
     @info "Manifest.toml is missing.  Adding `\$parentproject` in dev mode."
-    Pkg.develop(PackageSpec(path=parentproject))
+    Pkg.develop(Pkg.PackageSpec(path=parentproject))
 end
 
 @info "Instantiating..."
