@@ -1,5 +1,6 @@
-@doc read(joinpath(dirname(@__DIR__), "README.md"), String) ->
 module Run
+
+@doc read(joinpath(dirname(@__DIR__), "README.md"), String) Run
 
 """
     Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
