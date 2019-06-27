@@ -18,12 +18,18 @@ function migratetest(path="."; include_deps=false)
         deps[name] = prj["extras"][name]
     end
     specs = [PackageSpec(name=name, uuid=UUID(uuid)) for (name, uuid) in deps]
-    parentproject = Pkg.PackageSpec(path=abspath(path))
 
-    temporaryactivating(abspath(joinpath(path, "test"))) do
-        Pkg.develop(parentproject)
-        Pkg.add(specs)
+    testpath = abspath(joinpath(path, "test"))
+    parentproject = Pkg.PackageSpec(path=relpath(abspath(path), testpath))
+
+    cd(testpath) do
+        temporaryactivating(testpath) do
+            Pkg.develop(parentproject)
+            Pkg.add(specs)
+        end
     end
+
+    return
 end
 
 function temporaryactivating(f, project)
