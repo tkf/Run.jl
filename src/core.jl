@@ -1,7 +1,3 @@
-module Run
-
-@doc read(joinpath(dirname(@__DIR__), "README.md"), String) Run
-
 """
     Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
 
@@ -165,5 +161,3 @@ test(path="test"; kwargs...) = runproject(
     kwargs...,
 )
 docs(path="docs"; kwargs...) = runproject(joinpath(path, "make.jl"); kwargs...)
-
-end # module
