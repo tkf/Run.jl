@@ -5,6 +5,7 @@ module Run
 using Pkg
 using Pkg: TOML
 using UUIDs: UUID
+import Coverage
 
 include("core.jl")
 include("migratetest.jl")

@@ -161,3 +161,9 @@ test(path="test"; kwargs...) = runproject(
     kwargs...,
 )
 docs(path="docs"; kwargs...) = runproject(joinpath(path, "make.jl"); kwargs...)
+
+
+function after_success_test()
+    Coverage.Codecov.submit(Coverage.process_folder())
+    Coverage.Coveralls.submit(Coverage.process_folder())
+end
