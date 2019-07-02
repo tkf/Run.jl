@@ -31,12 +31,3 @@ function migratetest(path="."; include_deps=false)
 
     return
 end
-
-function temporaryactivating(f, project)
-    try
-        Pkg.activate(project)
-        return f()
-    finally
-        Pkg.activate()
-    end
-end
