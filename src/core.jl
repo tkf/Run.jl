@@ -85,6 +85,8 @@ const precompile_code = """
 @info "Precompiling... DONE"
 """
 
+yesno(yes::Bool) = yes ? "yes" : "no"
+
 _julia_cmd() = `$(Base.julia_cmd()) --color=yes --startup-file=no`
 # TODO: use --color=yes only when make sense
 
@@ -138,9 +140,7 @@ function runproject(
         julia_options = `--compile=min $julia_options`
     end
     if compiled_modules isa Bool
-        let yn = compiled_modules ? "yes" : "no"
-            julia_options = `--compiled-modules=$yn $julia_options`
-        end
+        julia_options = `--compiled-modules=$(yesno(compiled_modules)) $julia_options`
     end
     env = copy(ENV)
     env["JULIA_PROJECT"] = projectpath
@@ -155,10 +155,28 @@ end
 prepare_test(path="test"; kwargs...) = prepare(path; kwargs...)
 prepare_docs(path="docs"; kwargs...) = prepare(path; kwargs...)
 
+function _test_options(;
+    inline::Union{Bool, Nothing} = nothing,
+    code_coverage::Bool = true,
+    check_bounds::Bool = true,
+    kwargs...
+)
+    jlopt = `--check-bounds=$(yesno(check_bounds))`
+    if code_coverage
+        jlopt = `$jlopt --code-coverage=user`
+    end
+    if inline isa Bool
+        jlopt = `$jlopt --inline=$(yesno(inline))`
+    end
+    return (
+        julia_options = jlopt,
+        kwargs...
+    )
+end
+
 test(path="test"; kwargs...) = runproject(
     joinpath(path, "runtests.jl");
-    julia_options = `--code-coverage=user --check-bounds=yes`,
-    kwargs...,
+    _test_options(; kwargs...)...
 )
 docs(path="docs"; kwargs...) = runproject(joinpath(path, "make.jl"); kwargs...)
 

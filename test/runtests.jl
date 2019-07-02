@@ -8,4 +8,8 @@ using Test
         name = "UniversalIdentity",
         url = "https://github.com/tkf/UniversalIdentity.jl",
     )) isa Any
+    @test Run.test(PackageSpec(
+        name = "UniversalIdentity",
+        url = "https://github.com/tkf/UniversalIdentity.jl",
+    ); inline=false) isa Any
 end
