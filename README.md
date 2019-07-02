@@ -5,6 +5,7 @@
 [![Build Status](https://travis-ci.com/tkf/Run.jl.svg?branch=master)](https://travis-ci.com/tkf/Run.jl)
 [![Codecov](https://codecov.io/gh/tkf/Run.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/tkf/Run.jl)
 [![Coveralls](https://coveralls.io/repos/github/tkf/Run.jl/badge.svg?branch=master)](https://coveralls.io/github/tkf/Run.jl?branch=master)
+[![GitHub last commit](https://img.shields.io/github/last-commit/tkf/Run.jl.svg?style=social&logo=github)](https://github.com/tkf/Run.jl)
 
 Run.jl provides functions to run tests or build documentation in an
 isolated environment.  See more in the
@@ -22,6 +23,8 @@ install:
   - julia -e 'using Run; Run.prepare_test()'
 script:
   - julia -e 'using Run; Run.test()'
+after_success:
+  - julia -e 'using Run; Run.after_success_test()'
 ```
 
 Side notes:
