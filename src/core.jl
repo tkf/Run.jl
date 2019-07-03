@@ -119,7 +119,7 @@ function prepare(projectpath; precompile=true, parentproject=nothing)
     return Result("preparation finished", run(cmd))
 end
 
-function runproject(
+function script(
     script;
     prepare::Bool = true,
     fast::Bool = false,
@@ -174,11 +174,11 @@ function _test_options(;
     )
 end
 
-test(path="test"; kwargs...) = runproject(
+test(path="test"; kwargs...) = script(
     joinpath(path, "runtests.jl");
     _test_options(; kwargs...)...
 )
-docs(path="docs"; kwargs...) = runproject(joinpath(path, "make.jl"); kwargs...)
+docs(path="docs"; kwargs...) = script(joinpath(path, "make.jl"); kwargs...)
 
 
 function after_success_test()
