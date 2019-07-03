@@ -6,9 +6,9 @@ Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
 See also [`Run`](#Run).
 
 # Keyword Arguments
-- `prepare::Bool = true`: Call `Run.prepare_test` if `true` (default).
-- `fast::Bool = false`: Try to run it faster (more precisely, pass
-  `--compile=min` option to Julia subprocess.)
+- `fast::Bool = false`: Try to run it faster (more precisely, skip
+  `prepare` and pass `--compile=min` option to Julia subprocess.)
+- `prepare::Bool = !fast`: Call `Run.prepare_test` if `true` (default).
 - `compiled_modules::Union{Bool, Nothing} = nothing`:
   Use `--compiled-modules=yes` (`--compiled-modules=no`) option if
   `true` (`false`).  If `false`, it also skips precompilation in the
@@ -147,7 +147,8 @@ end
 
 function script(
     script;
-    prepare::Bool = true,
+    fast::Bool = false,
+    prepare::Bool = !fast,
     strict::Bool = true,
     compiled_modules = nothing,
     precompile = (compiled_modules != false),
@@ -156,6 +157,7 @@ function script(
     script = checkexisting(script)
     projectpath = dirname(script)
     julia_options, kwargs = _default_julia_options(;
+        fast = fast,
         compiled_modules = compiled_modules,
         kwargs...
     )
