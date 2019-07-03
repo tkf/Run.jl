@@ -119,29 +119,51 @@ function prepare(projectpath; precompile=true, parentproject=nothing)
     return Result("preparation finished", run(cmd))
 end
 
+function _default_julia_options(;
+    julia_options::Union{Cmd, Nothing} = nothing,
+    fast::Bool = false,
+    inline::Union{Bool, Nothing} = nothing,
+    compiled_modules::Union{Bool, Nothing} = nothing,
+    code_coverage::Bool = false,
+    check_bounds::Union{Bool, Nothing} = nothing,
+    kwargs...
+)
+    if julia_options !== nothing
+        return julia_options, kwargs
+    end
+
+    jlopt = ``  # = julia_options
+    addyn(cmd, ::Nothing) = jlopt
+    addyn(cmd, yn::Bool) = `$jlopt $cmd=$(yesno(yn))`
+
+    jlopt = addyn("--inline", inline)
+    jlopt = addyn("--compiled-modules", compiled_modules)
+    jlopt = addyn("--check-bounds", check_bounds)
+    jlopt = code_coverage ? `$jlopt --code-coverage=user` : jlopt
+    jlopt = fast ? `$jlopt --compile=min` : jlopt
+
+    return jlopt, kwargs
+end
+
 function script(
     script;
     prepare::Bool = true,
-    fast::Bool = false,
-    compiled_modules::Union{Bool, Nothing} = nothing,
     strict::Bool = true,
-    julia_options::Cmd = ``,
+    compiled_modules = nothing,
     precompile = (compiled_modules != false),
     kwargs...,
 )
     script = checkexisting(script)
     projectpath = dirname(script)
+    julia_options, kwargs = _default_julia_options(;
+        compiled_modules = compiled_modules,
+        kwargs...
+    )
     prepare && (@__MODULE__).prepare(
         projectpath;
         precompile = precompile,
         kwargs...,
     )
-    if fast
-        julia_options = `--compile=min $julia_options`
-    end
-    if compiled_modules isa Bool
-        julia_options = `--compiled-modules=$(yesno(compiled_modules)) $julia_options`
-    end
     env = copy(ENV)
     env["JULIA_PROJECT"] = projectpath
     if strict
@@ -155,30 +177,16 @@ end
 prepare_test(path="test"; kwargs...) = prepare(path; kwargs...)
 prepare_docs(path="docs"; kwargs...) = prepare(path; kwargs...)
 
-function _test_options(;
-    inline::Union{Bool, Nothing} = nothing,
-    code_coverage::Bool = true,
-    check_bounds::Bool = true,
-    kwargs...
-)
-    jlopt = `--check-bounds=$(yesno(check_bounds))`
-    if code_coverage
-        jlopt = `$jlopt --code-coverage=user`
-    end
-    if inline isa Bool
-        jlopt = `$jlopt --inline=$(yesno(inline))`
-    end
-    return (
-        julia_options = jlopt,
-        kwargs...
-    )
-end
-
 test(path="test"; kwargs...) = script(
     joinpath(path, "runtests.jl");
-    _test_options(; kwargs...)...
+    code_coverage = true,
+    check_bounds = true,
+    kwargs...
 )
-docs(path="docs"; kwargs...) = script(joinpath(path, "make.jl"); kwargs...)
+docs(path="docs"; kwargs...) = script(
+    joinpath(path, "make.jl");
+    kwargs...
+)
 
 
 function after_success_test()
