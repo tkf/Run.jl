@@ -3,7 +3,9 @@ using Pkg
 using Test
 
 @testset "smoke test" begin
-    @test Run.docs(joinpath(@__DIR__, "..", "docs")) isa Any
+    withenv("DOCUMENTER_KEY" => nothing) do
+        @test Run.docs(joinpath(@__DIR__, "..", "docs")) isa Any
+    end
 
     pkgspec = PackageSpec(
         name = "InitialValues",
