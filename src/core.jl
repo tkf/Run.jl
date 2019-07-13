@@ -154,6 +154,9 @@ function script(
     precompile = (compiled_modules != false),
     kwargs...,
 )
+    if get(ENV, "CI", "false") == "true"
+        versioninfo()
+    end
     script = checkexisting(script)
     projectpath = dirname(script)
     julia_options, kwargs = _default_julia_options(;

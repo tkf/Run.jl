@@ -12,4 +12,16 @@ using Test
     )
     @test Run.test(pkgspec) isa Any
     @test Run.test(pkgspec; inline=false) isa Any
+
+    pkgid = Base.PkgId(
+        Base.UUID("22cec73e-a1b8-11e9-2c92-598750a2cf9c"),
+        "InitialValues",
+    )
+
+    mktempdir() do project
+        Run.temporaryactivating(project) do
+            Pkg.add(pkgspec)
+            Run.versioninfo(stdout, pkgid)
+        end
+    end
 end
