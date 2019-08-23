@@ -34,3 +34,18 @@ function test(spec::_PackageSpec; kwargs...)
     @info "Testing $spec..."
     return test(testpath; kwargs...)
 end
+
+function copymanifest(oldpath::AbstractString, newpath::AbstractString)
+    open(newpath; write=true) do io
+        for line in eachline(oldpath; keep=true)
+            m = match(r"(path *= *)\"(.*?)\"", line)
+            if m !== nothing && !isabspath(m.captures[2])
+                write(io, m.captures[1])
+                write(io, repr(joinpath(dirname(abspath(oldpath)), m.captures[2])))
+                println(io)
+            else
+                write(io, line)
+            end
+        end
+    end
+end

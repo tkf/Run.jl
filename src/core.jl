@@ -152,6 +152,7 @@ function script(
     strict::Bool = true,
     compiled_modules = nothing,
     precompile = (compiled_modules != false),
+    parentproject = nothing,
     kwargs...,
 )
     if get(ENV, "CI", "false") == "true"
@@ -164,20 +165,37 @@ function script(
         compiled_modules = compiled_modules,
         kwargs...
     )
-    prepare && (@__MODULE__).prepare(
-        projectpath;
-        precompile = precompile,
-        kwargs...,
-    )
-    env = copy(ENV)
-    env["JULIA_PROJECT"] = projectpath
-    if strict
-        env["JULIA_LOAD_PATH"] = "@"
+    projecttoml = existingproject(projectpath)
+    manifesttoml = manifesttomlpath(projectpath)
+    projectpath = abspath(dirname(projecttoml))
+    if parentproject === nothing
+        parentproject = dirname(projectpath)
     end
-    @info "Running $script"
-    cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
-    return Result("run finished", run(cmd))
+    mktempdir() do tmpproject
+        cp(projecttoml, joinpath(tmpproject, "Project.toml"))
+        if isfile(manifesttoml)
+            copymanifest(manifesttoml, joinpath(tmpproject, "Manifest.toml"))
+        end
+        prepare && (@__MODULE__).prepare(
+            tmpproject;
+            precompile = precompile,
+            parentproject = parentproject,
+            kwargs...,
+        )
+        env = copy(ENV)
+        env["JULIA_PROJECT"] = tmpproject
+        if strict
+            env["JULIA_LOAD_PATH"] = "@"
+        end
+        @info "Running $script"
+        cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
+        return Result("run finished", run(cmd))
+    end
 end
+# Note: Copying toml files to make it work nicely with running script
+# which may mutate the toml files.  For example,
+# `PkgBenchmark.benchmarkpkg` can check out new revision containing
+# different toml files.
 
 prepare_test(path="test"; kwargs...) = prepare(path; kwargs...)
 prepare_docs(path="docs"; kwargs...) = prepare(path; kwargs...)
