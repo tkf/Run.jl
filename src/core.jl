@@ -1,9 +1,9 @@
 """
-    Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
+    Run.script(path; <keyword arguments>)
 
-Run `\$path/runtests.jl` after activating `\$path/Project.toml`.
+Run Julia script at `path` after activating `\$path/Project.toml`.
 
-See also [`Run`](#Run).
+See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 
 # Keyword Arguments
 - `fast::Bool = false`: Try to run it faster (more precisely, skip
@@ -16,19 +16,34 @@ See also [`Run`](#Run).
 - `strict::Bool = true`: Do not include the default environment in the
   load path (more precisely, set the environment variable
   `JULIA_LOAD_PATH=@`).
+- `code_coverage::Bool = false`: Control `--code-coverage` option.
+- `check_bounds::Union{Nothing, Bool} = nothing`: Control
+  `--check-bounds` option.  `nothing` means to inherit the option
+  specified for the current Julia session.
 - Other keywords are passed to `Run.prepare_test`.
+"""
+script
+
+"""
+    Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
+
+Run `\$path/runtests.jl` after activating `\$path/Project.toml`.  It
+simply calls [`Run.script`](@ref) with default keyword arguments
+`code_coverage = true` and `check_bounds = true`.
+
+See also [`Run.script`](@ref) and [`Run`](#Run).
 """
 test
 
 """
     Run.docs(path="docs"; prepare, fast, compiled_modules, strict, precompile)
 
-See [`Run.test`](@ref).
+See [`Run.script`](@ref).
 """
 docs
 
 """
-    Run.prepare_test(path="test"; precompile)
+    Run.prepare(path::AbstractString; precompile, parentproject)
 
 Instantiate `\$path/Project.toml`.  It also `dev`s the project in the parent
 directory of `path` into `\$path/Project.toml` if `\$path/Manifest.toml`
@@ -36,13 +51,22 @@ does not exist.
 
 # Keyword Arguments
 - `precompile::Bool = true`: Precompile the project if `true` (default).
+- `parentproject::AbstractString`: Path to parent project.  Default to
+  parent directory of `path`.
+"""
+prepare
+
+"""
+    Run.prepare_test(path="test"; precompile)
+
+It is an alias of [`Run.prepare("test")`](@ref Run.prepare).
 """
 prepare_test
 
 """
     Run.prepare_docs(path="docs"; precompile)
 
-See [`Run.prepare_test`](@ref).
+It is an alias of [`Run.prepare("docs")`](@ref Run.prepare).
 """
 prepare_docs
 
