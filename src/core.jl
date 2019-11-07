@@ -31,6 +31,8 @@ Run `\$path/runtests.jl` after activating `\$path/Project.toml`.  It
 simply calls [`Run.script`](@ref) with default keyword arguments
 `code_coverage = true` and `check_bounds = true`.
 
+`path` can also be a path to a script file.
+
 See also [`Run.script`](@ref) and [`Run`](#Run).
 """
 test
@@ -38,7 +40,10 @@ test
 """
     Run.docs(path="docs"; prepare, fast, compiled_modules, strict, precompile)
 
-See [`Run.script`](@ref).
+Run `\$path/make.jl` after activating `\$path/Project.toml`.  It
+simply calls [`Run.script`](@ref).
+
+`path` can also be a path to a script file.
 """
 docs
 
@@ -224,14 +229,25 @@ end
 prepare_test(path="test"; kwargs...) = prepare(path; kwargs...)
 prepare_docs(path="docs"; kwargs...) = prepare(path; kwargs...)
 
+function existingscript(path, candidates)
+    candidates = abspath.(candidates)
+    i = findfirst(isfile, candidates)
+    i === nothing || return candidates[i]
+    error(
+        "No script file found at `$path`.\n",
+        "Following paths are checked, but none of the paths exist:\n",
+        join(string.("*", candidates), "\n"),
+    )
+end
+
 test(path="test"; kwargs...) = script(
-    joinpath(path, "runtests.jl");
+    existingscript(path, (path, joinpath(path, "runtests.jl")));
     code_coverage = true,
     check_bounds = true,
     kwargs...
 )
 docs(path="docs"; kwargs...) = script(
-    joinpath(path, "make.jl");
+    existingscript(path, (path, joinpath(path, "make.jl")));
     kwargs...
 )
 
