@@ -6,6 +6,7 @@ Run Julia script at `path` after activating `\$path/Project.toml`.
 See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 
 # Keyword Arguments
+- `project::String`: Project to be used instead of `\$path/Project.toml`.
 - `fast::Bool = false`: Try to run it faster (more precisely, skip
   `prepare` and pass `--compile=min` option to Julia subprocess.)
 - `prepare::Bool = !fast`: Call `Run.prepare_test` if `true` (default).
@@ -176,6 +177,7 @@ end
 
 function script(
     script;
+    project=dirname(script),
     fast::Bool = false,
     prepare::Bool = !fast,
     strict::Bool = true,
@@ -188,7 +190,7 @@ function script(
         versioninfo()
     end
     script = checkexisting(script)
-    projectpath = dirname(script)
+    projectpath = project
     julia_options, kwargs = _default_julia_options(;
         fast = fast,
         compiled_modules = compiled_modules,
