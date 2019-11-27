@@ -187,6 +187,8 @@ function script(
     kwargs...,
 )
     if get(ENV, "CI", "false") == "true"
+        InteractiveUtils.versioninfo()
+        runtimeinfo()
         versioninfo()
     end
     script = checkexisting(script)
