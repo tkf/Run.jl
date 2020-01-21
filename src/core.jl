@@ -6,7 +6,9 @@ Run Julia script at `path` after activating `\$path/Project.toml`.
 See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 
 # Keyword Arguments
-- `project::String`: Project to be used instead of `\$path/Project.toml`.
+- `project::String`: Project to be used instead of `\$path/../Project.toml`.
+- `parentproject::String`: Project to be added to `project` _if_ it does
+  not have corresponding manifest file.
 - `fast::Bool = false`: Try to run it faster (more precisely, skip
   `prepare` and pass `--compile=min` option to Julia subprocess.)
 - `prepare::Bool = !fast`: Call `Run.prepare_test` if `true` (default).
@@ -14,6 +16,8 @@ See also [`Run.test`](@ref) and [`Run.docs`](@ref).
   Use `--compiled-modules=yes` (`--compiled-modules=no`) option if
   `true` (`false`).  If `false`, it also skips precompilation in the
   preparation phase.
+- `precompile::Bool = (compiled_modules != false)`: Precompile project
+  before running script.
 - `strict::Bool = true`: Do not include the default environment in the
   load path (more precisely, set the environment variable
   `JULIA_LOAD_PATH=@`).
@@ -26,7 +30,7 @@ See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 script
 
 """
-    Run.test(path="test"; prepare, fast, compiled_modules, strict, precompile)
+    Run.test(path="test"; <keyword arguments>)
 
 Run `\$path/runtests.jl` after activating `\$path/Project.toml`.  It
 simply calls [`Run.script`](@ref) with default keyword arguments
@@ -39,7 +43,7 @@ See also [`Run.script`](@ref) and [`Run`](#Run).
 test
 
 """
-    Run.docs(path="docs"; prepare, fast, compiled_modules, strict, precompile)
+    Run.docs(path="docs"; <keyword arguments>)
 
 Run `\$path/make.jl` after activating `\$path/Project.toml`.  It
 simply calls [`Run.script`](@ref).
