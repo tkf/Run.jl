@@ -13,9 +13,18 @@ fail_script = joinpath(@__DIR__, "fail", "fail.jl")
             result = Run.test(pass_script)
         end isa Result
         @test result.proc.exitcode == 0
+        @test sprint(show, "text/plain", result) isa String
     end
     @testset "true failure" begin
-        @test_throws Failed Run.test(fail_script)
+        err = nothing
+        @test try
+            Run.test(fail_script)
+            false
+        catch err
+            true
+        end
+        @test err.result.proc.exitcode == 1
+        @test sprint(show, "text/plain", err) isa String
     end
 
     @testset "expected failure" begin
@@ -24,9 +33,20 @@ fail_script = joinpath(@__DIR__, "fail", "fail.jl")
             result = Run.test(fail_script; xfail = true)
         end isa Result
         @test result.proc.exitcode == 1
+        @test sprint(show, "text/plain", result) isa String
+        @test sprint(showerror, result) isa String
     end
     @testset "unexpected pass" begin
-        @test_throws Failed Run.test(pass_script; xfail = true)
+        err = nothing
+        @test try
+            Run.test(pass_script; xfail = true)
+            false
+        catch err
+            true
+        end
+        @test err.result.proc.exitcode == 0
+        @test sprint(show, "text/plain", err) isa String
+        @test sprint(showerror, err) isa String
     end
 end
 
