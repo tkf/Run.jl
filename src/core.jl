@@ -25,6 +25,9 @@ See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 - `check_bounds::Union{Nothing, Bool} = nothing`: Control
   `--check-bounds` option.  `nothing` means to inherit the option
   specified for the current Julia session.
+- `xfail::bool = false`: If failure is expected.
+- `exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0]`: List of
+  allowed exit codes.
 - Other keywords are passed to `Run.prepare_test`.
 """
 script
@@ -135,7 +138,39 @@ function Base.show(io::IO, ::MIME"text/plain", result::Result)
     if exitcode !== 0
         print(io, " ")
         printstyled(io, "(exit code: ", exitcode, ")"; color=:red)
+        println(io)
+        println(io, "Command: ", Cmd(result.proc.cmd.exec))
+        print(io, "Environment variables:")
+        _printenv(io, something(result.proc.cmd.env, ENV))
     end
+end
+
+function _printenv(io, env)
+    for nv in env
+        if nv isa AbstractString
+            name, value = split(nv, "=", limit = 2)
+        else
+            name, value = nv
+        end
+        # regex taken from `versioninfo`:
+        if startswith(name, "JULIA") || occursin(r"PATH|FLAG|^TERM$|HOME", name)
+            println(io)
+            print(io, "  ", name, " = ", value)
+        end
+    end
+end
+
+struct Failed <: Exception
+    result::Result
+end
+
+function Base.show(io::IO, ::MIME"text/plain", failed::Failed)
+    print(io, "Failed ")
+    show(io, MIME"text/plain"(), failed.result)
+end
+
+function Base.showerror(io::IO, failed::Failed)
+    show(io, MIME"text/plain"(), failed)
 end
 
 function prepare(projectpath; precompile=true, parentproject=nothing)
@@ -188,6 +223,8 @@ function script(
     compiled_modules = nothing,
     precompile = (compiled_modules != false),
     parentproject = nothing,
+    xfail::Bool = false,
+    exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0],
     kwargs...,
 )
     if get(ENV, "CI", "false") == "true"
@@ -226,7 +263,13 @@ function script(
         end
         @info "Running $script"
         cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
-        return Result("run finished", run(cmd))
+        proc = run(ignorestatus(cmd))
+        result = Result("run finished", proc)
+        if proc.exitcode in exitcodes
+            return result
+        else
+            throw(Failed(result))
+        end
     end
 end
 # Note: Copying toml files to make it work nicely with running script
