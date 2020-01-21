@@ -1,6 +1,34 @@
 using Run
+using Run: Result, Failed
 using Pkg
 using Test
+
+pass_script = joinpath(@__DIR__, "pass", "pass.jl")
+fail_script = joinpath(@__DIR__, "fail", "fail.jl")
+
+@testset "xfail" begin
+    @testset "true pass" begin
+        result = nothing
+        @test begin
+            result = Run.test(pass_script)
+        end isa Result
+        @test result.proc.exitcode == 0
+    end
+    @testset "true failure" begin
+        @test_throws Failed Run.test(fail_script)
+    end
+
+    @testset "expected failure" begin
+        result = nothing
+        @test begin
+            result = Run.test(fail_script; xfail = true)
+        end isa Result
+        @test result.proc.exitcode == 1
+    end
+    @testset "unexpected pass" begin
+        @test_throws Failed Run.test(pass_script; xfail = true)
+    end
+end
 
 @testset "smoke test" begin
     withenv("DOCUMENTER_KEY" => nothing) do
