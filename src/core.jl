@@ -25,6 +25,10 @@ See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 - `check_bounds::Union{Nothing, Bool} = nothing`: Control
   `--check-bounds` option.  `nothing` means to inherit the option
   specified for the current Julia session.
+- `depwarn::Union{Nothing, Bool, Symbol} = nothing`: Use `--depwarn` setting
+  of the current process if `nothing` (default).  Set `--depwarn=yes` if `true`
+  or `--depwarn=no` if `false`.  A symbol value is passed as `--depwarn` value.
+  So, passing `:error` sets `--depwarn=error`.
 - `xfail::bool = false`: If failure is expected.
 - `exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0]`: List of
   allowed exit codes.
@@ -37,7 +41,7 @@ script
 
 Run `\$path/runtests.jl` after activating `\$path/Project.toml`.  It
 simply calls [`Run.script`](@ref) with default keyword arguments
-`code_coverage = true` and `check_bounds = true`.
+`code_coverage = true`, `check_bounds = true`, and `depwarn = true`.
 
 `path` can also be a path to a script file.
 
@@ -195,6 +199,7 @@ function _default_julia_options(;
     compiled_modules::Union{Bool, Nothing} = nothing,
     code_coverage::Bool = false,
     check_bounds::Union{Bool, Nothing} = nothing,
+    depwarn::Union{Bool, Symbol, Nothing} = nothing,
     kwargs...
 )
     if julia_options !== nothing
@@ -204,11 +209,14 @@ function _default_julia_options(;
     jlopt = ``  # = julia_options
     addyn(cmd, ::Nothing) = jlopt
     addyn(cmd, yn::Bool) = `$jlopt $cmd=$(yesno(yn))`
+    addopt(cmd, yn::Union{Bool, Nothing}) = addyn(cmd, yn)
+    addopt(cmd, value::Symbol) = `$jlopt $cmd=$value`
 
     jlopt = addyn("--inline", inline)
     jlopt = addyn("--compiled-modules", compiled_modules)
     jlopt = addyn("--check-bounds", check_bounds)
     jlopt = code_coverage ? `$jlopt --code-coverage=user` : jlopt
+    jlopt = addopt("--depwarn", depwarn)
     jlopt = fast ? `$jlopt --compile=min` : jlopt
 
     return jlopt, kwargs
@@ -295,6 +303,7 @@ test(path="test"; kwargs...) = script(
     existingscript(path, (path, joinpath(path, "runtests.jl")));
     code_coverage = true,
     check_bounds = true,
+    depwarn = true,
     kwargs...
 )
 docs(path="docs"; kwargs...) = script(
