@@ -108,9 +108,10 @@ parentproject, = ARGS
 
 Pkg = Base.require(Base.PkgId(Base.UUID(0x44cfe95a1eb252eab672e2afdf69b78f), "Pkg"))
 
-Base.HOME_PROJECT[] === nothing && error("No project specified")
+project = something(Base.HOME_PROJECT[], Base.ACTIVE_PROJECT[], Some(nothing))
+project === nothing && error("No project specified")
 
-if !any(isfile.(joinpath.(Base.HOME_PROJECT[], ("JuliaManifest.toml", "Manifest.toml"))))
+if !any(isfile.(joinpath.(project, ("JuliaManifest.toml", "Manifest.toml"))))
     @info "Manifest.toml is missing.  Adding `\$parentproject` in dev mode."
     Pkg.develop(Pkg.PackageSpec(path=parentproject))
 end
