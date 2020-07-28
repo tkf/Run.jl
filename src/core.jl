@@ -25,6 +25,13 @@ See also [`Run.test`](@ref) and [`Run.docs`](@ref).
 - `check_bounds::Union{Nothing, Bool} = nothing`: Control
   `--check-bounds` option.  `nothing` means to inherit the option
   specified for the current Julia session.
+- `depwarn::Union{Nothing, Bool, Symbol} = nothing`: Use `--depwarn` setting
+  of the current process if `nothing` (default).  Set `--depwarn=yes` if `true`
+  or `--depwarn=no` if `false`.  A symbol value is passed as `--depwarn` value.
+  So, passing `:error` sets `--depwarn=error`.
+- `xfail::bool = false`: If failure is expected.
+- `exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0]`: List of
+  allowed exit codes.
 - Other keywords are passed to `Run.prepare_test`.
 """
 script
@@ -34,7 +41,7 @@ script
 
 Run `\$path/runtests.jl` after activating `\$path/Project.toml`.  It
 simply calls [`Run.script`](@ref) with default keyword arguments
-`code_coverage = true` and `check_bounds = true`.
+`code_coverage = true`, `check_bounds = true`, and `depwarn = true`.
 
 `path` can also be a path to a script file.
 
@@ -101,9 +108,10 @@ parentproject, = ARGS
 
 Pkg = Base.require(Base.PkgId(Base.UUID(0x44cfe95a1eb252eab672e2afdf69b78f), "Pkg"))
 
-Base.HOME_PROJECT[] === nothing && error("No project specified")
+project = something(Base.HOME_PROJECT[], Base.ACTIVE_PROJECT[], Some(nothing))
+project === nothing && error("No project specified")
 
-if !any(isfile.(joinpath.(Base.HOME_PROJECT[], ("JuliaManifest.toml", "Manifest.toml"))))
+if !any(isfile.(joinpath.(project, ("JuliaManifest.toml", "Manifest.toml"))))
     @info "Manifest.toml is missing.  Adding `\$parentproject` in dev mode."
     Pkg.develop(Pkg.PackageSpec(path=parentproject))
 end
@@ -135,7 +143,39 @@ function Base.show(io::IO, ::MIME"text/plain", result::Result)
     if exitcode !== 0
         print(io, " ")
         printstyled(io, "(exit code: ", exitcode, ")"; color=:red)
+        println(io)
+        println(io, "Command: ", Cmd(result.proc.cmd.exec))
+        print(io, "Environment variables:")
+        _printenv(io, something(result.proc.cmd.env, ENV))
     end
+end
+
+function _printenv(io, env)
+    for nv in env
+        if nv isa AbstractString
+            name, value = split(nv, "=", limit = 2)
+        else
+            name, value = nv
+        end
+        # regex taken from `versioninfo`:
+        if startswith(name, "JULIA") || occursin(r"PATH|FLAG|^TERM$|HOME", name)
+            println(io)
+            print(io, "  ", name, " = ", value)
+        end
+    end
+end
+
+struct Failed <: Exception
+    result::Result
+end
+
+function Base.show(io::IO, ::MIME"text/plain", failed::Failed)
+    print(io, "Failed ")
+    show(io, MIME"text/plain"(), failed.result)
+end
+
+function Base.showerror(io::IO, failed::Failed)
+    show(io, MIME"text/plain"(), failed)
 end
 
 function prepare(projectpath; precompile=true, parentproject=nothing)
@@ -160,6 +200,7 @@ function _default_julia_options(;
     compiled_modules::Union{Bool, Nothing} = nothing,
     code_coverage::Bool = false,
     check_bounds::Union{Bool, Nothing} = nothing,
+    depwarn::Union{Bool, Symbol, Nothing} = nothing,
     kwargs...
 )
     if julia_options !== nothing
@@ -169,11 +210,14 @@ function _default_julia_options(;
     jlopt = ``  # = julia_options
     addyn(cmd, ::Nothing) = jlopt
     addyn(cmd, yn::Bool) = `$jlopt $cmd=$(yesno(yn))`
+    addopt(cmd, yn::Union{Bool, Nothing}) = addyn(cmd, yn)
+    addopt(cmd, value::Symbol) = `$jlopt $cmd=$value`
 
     jlopt = addyn("--inline", inline)
     jlopt = addyn("--compiled-modules", compiled_modules)
     jlopt = addyn("--check-bounds", check_bounds)
     jlopt = code_coverage ? `$jlopt --code-coverage=user` : jlopt
+    jlopt = addopt("--depwarn", depwarn)
     jlopt = fast ? `$jlopt --compile=min` : jlopt
 
     return jlopt, kwargs
@@ -188,6 +232,8 @@ function script(
     compiled_modules = nothing,
     precompile = (compiled_modules != false),
     parentproject = nothing,
+    xfail::Bool = false,
+    exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0],
     kwargs...,
 )
     if get(ENV, "CI", "false") == "true"
@@ -226,7 +272,13 @@ function script(
         end
         @info "Running $script"
         cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
-        return Result("run finished", run(cmd))
+        proc = run(ignorestatus(cmd))
+        result = Result("run finished", proc)
+        if proc.exitcode in exitcodes
+            return result
+        else
+            throw(Failed(result))
+        end
     end
 end
 # Note: Copying toml files to make it work nicely with running script
@@ -252,6 +304,7 @@ test(path="test"; kwargs...) = script(
     existingscript(path, (path, joinpath(path, "runtests.jl")));
     code_coverage = true,
     check_bounds = true,
+    depwarn = true,
     kwargs...
 )
 docs(path="docs"; kwargs...) = script(
