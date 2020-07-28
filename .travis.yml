@@ -11,10 +11,6 @@ julia:
   - 1.1
   - 1.2
   - nightly
-matrix:
-  allow_failures:
-    - julia: nightly
-  fast_finish: true
 notifications:
   email: false
 
@@ -26,6 +22,9 @@ if: branch = master OR tag IS present OR type != push
 after_success:
   - julia -e 'using Run; Run.after_success_test()'
 jobs:
+  allow_failures:
+    - julia: nightly
+  fast_finish: true
   include:
     - stage: Documentation
       script: julia --project=docs --color=yes -e '
