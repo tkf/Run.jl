@@ -67,11 +67,10 @@ end
 
     pkgspec = PackageSpec(
         name = "InitialValues",
-        url = "https://github.com/tkf/InitialValues.jl",
-        rev = "62b240fb85836b9731b0a893e446a9c90311afce",
+        rev = "65ebf60fd37f975802c16511a04808f658a960ff",  # v0.2.9
     )
-    @test Run.test(pkgspec) isa Any
-    @test Run.test(pkgspec; inline=false) isa Any
+    @test Run.test(pkgspec; project="test/environments/main") isa Any
+    @test Run.test(pkgspec; project="test/environments/main", inline=false) isa Any
 
     pkgid = Base.PkgId(
         Base.UUID("22cec73e-a1b8-11e9-2c92-598750a2cf9c"),
