@@ -32,7 +32,10 @@ function test(spec::_PackageSpec; kwargs...)
     end
 
     @info "Testing $spec..."
-    return test(testpath; kwargs...)
+    # `cd` so that `project="test/environments/main"` works
+    cd(dirname(testpath)) do
+        return test(testpath; kwargs...)
+    end
 end
 
 function copymanifest(oldpath::AbstractString, newpath::AbstractString)
