@@ -22,6 +22,46 @@ isolated environment.  See more in the
 
 ## Examples
 
+### `.github/workflow/*.yml`
+
+Here is an example for using Run.jl with GitHub Actions.  Create a
+file, e.g., `.github/workflow/test.yml`, with:
+
+```yaml
+name: Run tests
+
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        julia-version: ['1']
+      fail-fast: false
+    name: Test Julia ${{ matrix.julia-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}
+      - run: julia -e 'using Pkg; pkg"add Run@0.1"'
+      - run: julia -e 'using Run; Run.prepar()'
+      - run: julia -e 'using Run; Run.test()'
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./lcov.info
+          flags: unittests
+          name: codecov-umbrella
+```
+
 ### `.travis.yml`
 
 To use `Run.test` to run tests in Travis CI, add the following snippet
