@@ -30,7 +30,7 @@ in `.travis.yml`.
 ```yaml
 before_install:
   - unset JULIA_PROJECT
-  - julia -e 'using Pkg; pkg"add https://github.com/tkf/Run.jl"'
+  - julia -e 'using Pkg; pkg"add Run@0.1"'
 install:
   - julia -e 'using Run; Run.prepare_test()'
 script:
@@ -59,7 +59,7 @@ Side notes:
 .template:
   image: julia
   before_script:
-    - julia -e 'using Pkg; pkg"add https://github.com/tkf/Run.jl"'
+    - julia -e 'using Pkg; pkg"add Run@0.1"'
 
 test:
   extends: .template
