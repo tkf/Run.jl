@@ -52,7 +52,7 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
       - run: julia -e 'using Pkg; pkg"add Run@0.1"'
-      - run: julia -e 'using Run; Run.prepar()'
+      - run: julia -e 'using Run; Run.prepare_test()'
       - run: julia -e 'using Run; Run.test()'
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
