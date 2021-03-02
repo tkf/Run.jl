@@ -8,6 +8,7 @@ fail_script = joinpath(@__DIR__, "fail", "fail.jl")
 depwarn_no_script = joinpath(@__DIR__, "depwarn-no", "test.jl")
 depwarn_yes_script = joinpath(@__DIR__, "depwarn-yes", "test.jl")
 depwarn_error_script = joinpath(@__DIR__, "depwarn-error", "test.jl")
+signal_script = joinpath(@__DIR__, "signal", "test.jl")
 
 @testset "xfail" begin
     @testset "true pass" begin
@@ -58,6 +59,16 @@ end
     @test Run.test(depwarn_yes_script; depwarn = false, xfail = true).proc.exitcode == 1
     @test Run.test(depwarn_no_script; depwarn = false).proc.exitcode == 0
     @test Run.test(depwarn_error_script; depwarn = :error).proc.exitcode == 0
+end
+
+@testset "signal" begin
+    @test try
+        Run.test(signal_script)
+        nothing
+    catch err
+        err
+    end isa Failed
+    @test Run.test(signal_script, xfail = true) isa Result
 end
 
 @testset "smoke test" begin
