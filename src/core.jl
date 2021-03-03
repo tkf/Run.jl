@@ -281,7 +281,7 @@ function script(
                 throw(Failed(result))
             end
         else
-            if proc.exitcode in exitcodes
+            if proc.termsignal == 0 && proc.exitcode in exitcodes
                 return result
             else
                 throw(Failed(result))

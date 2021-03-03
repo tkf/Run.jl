@@ -9,6 +9,7 @@ depwarn_no_script = joinpath(@__DIR__, "depwarn-no", "test.jl")
 depwarn_yes_script = joinpath(@__DIR__, "depwarn-yes", "test.jl")
 depwarn_error_script = joinpath(@__DIR__, "depwarn-error", "test.jl")
 signal_script = joinpath(@__DIR__, "signal", "test.jl")
+exit2_script = joinpath(@__DIR__, "exit2", "test.jl")
 
 @testset "xfail" begin
     @testset "true pass" begin
@@ -69,6 +70,22 @@ end
         err
     end isa Failed
     @test Run.test(signal_script, xfail = true) isa Result
+end
+
+@testset "exitcodes" begin
+    @test Run.test(exit2_script, exitcodes = [2]) isa Result
+    @test try
+        Run.test(exit2_script; exitcodes = [0])
+        nothing
+    catch err
+        err
+    end isa Failed
+    @test try
+        Run.test(signal_script, exitcodes = [0])
+        nothing
+    catch err
+        err
+    end isa Failed
 end
 
 @testset "smoke test" begin
