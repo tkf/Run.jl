@@ -30,8 +30,8 @@ See also [`Run.test`](@ref) and [`Run.docs`](@ref).
   or `--depwarn=no` if `false`.  A symbol value is passed as `--depwarn` value.
   So, passing `:error` sets `--depwarn=error`.
 - `xfail::bool = false`: If failure is expected.
-- `exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0]`: List of
-  allowed exit codes.
+- `exitcodes::AbstractVector{<:Integer}`: List of allowed exit codes.
+  `xfail` is ignored when given.
 - Other keywords are passed to `Run.prepare_test`.
 """
 script
@@ -233,7 +233,7 @@ function script(
     precompile = (compiled_modules != false),
     parentproject = nothing,
     xfail::Bool = false,
-    exitcodes::AbstractVector{<:Integer} = xfail ? [1] : [0],
+    exitcodes::Union{Nothing,AbstractVector{<:Integer}} = nothing,
     kwargs...,
 )
     if get(ENV, "CI", "false") == "true"
@@ -274,10 +274,18 @@ function script(
         cmd = setenv(`$(_julia_cmd()) $julia_options $script`, env)
         proc = run(ignorestatus(cmd))
         result = Result("run finished", proc)
-        if proc.exitcode in exitcodes
-            return result
+        if exitcodes === nothing
+            if success(proc) == !xfail
+                return result
+            else
+                throw(Failed(result))
+            end
         else
-            throw(Failed(result))
+            if proc.termsignal == 0 && proc.exitcode in exitcodes
+                return result
+            else
+                throw(Failed(result))
+            end
         end
     end
 end
