@@ -41,7 +41,13 @@ function find_pkg_entry(pkg, path::AbstractString)
         isfile,
         joinpath.(dirname(path), ["JuliaManifest.toml", "Manifest.toml"]),
     )
-    return tryfind(get(TOML.parsefile(manifest), pkg.name, ())) do entry
+    dict = TOML.parsefile(manifest)
+    pkgs = something(
+        get(dict, pkg.name, nothing),
+        get(get(dict, "deps", Dict()), pkg.name, nothing),  # v2
+        [],
+    )
+    return tryfind(pkgs) do entry
         Base.UUID(get(entry, "uuid", 0)) === pkg.uuid
     end
 end
