@@ -95,8 +95,8 @@ end
 
     pkgspec = PackageSpec(
         name = "InitialValues",
-        rev = "cd91162f0a0f69960d972a7850dae705c6359146",
-        # https://github.com/JuliaFolds/InitialValues.jl/commit/cd91162f0a0f69960d972a7850dae705c6359146
+        rev = "4812f80c357a83021f71c7c3642f11eb1339aa56",
+        # https://github.com/JuliaFolds/InitialValues.jl/commit/4812f80c357a83021f71c7c3642f11eb1339aa56
     )
     @test Run.test(pkgspec; project="test/environments/main") isa Any
     @test Run.test(pkgspec; project="test/environments/main", inline=false) isa Any
