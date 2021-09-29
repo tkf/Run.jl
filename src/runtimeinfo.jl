@@ -23,7 +23,10 @@ https://github.com/JuliaLang/julia/blob/v1.3.0/stdlib/Distributed/test/distribut
 
 See also: https://stackoverflow.com/a/37516335
 """
-function blas_num_threads()
+blas_num_threads() =
+    VERSION < v"1.6" ? blas_num_threads_jl10() : LinearAlgebra.BLAS.get_num_threads()
+
+function blas_num_threads_jl10()
     blas = LinearAlgebra.BLAS.vendor()
     # Wrap in a try to catch unsupported blas versions
     try
